@@ -28,42 +28,55 @@ class FormFilterServiceProvider implements ServiceProviderInterface
         if (!isset($app['form.factory'])) {
             throw new \LogicException('You must register the FormServiceProvider to use the FormFilterServiceProvider');
         }
-        
-        $app['lexik_form_filter.query_builder_updater'] = $app->share(function () use ($app) {
-            return new FilterBuilderUpdater($app['lexik_form_filter.form_data_extractor'], $app['dispatcher']);
-        });
+
+        $app['lexik_form_filter.query_builder_updater'] = $app->share(
+            function (Application $app) {
+                return new FilterBuilderUpdater(
+                    $app['lexik_form_filter.form_data_extractor'],
+                    $app['dispatcher']
+                );
+            }
+        );
 
         // Alias
-        $app['form_filter'] = $app->share(function () use ($app) {
+        $app['form_filter'] = $app->share(function (Application $app) {
             return $app['lexik_form_filter.query_builder_updater'];
         });
 
         // Filter Types
-        $app['form.types'] = $app->share($app->extend('form.types', function ($types) use ($app) {
-            $types[] = new Type\TextFilterType();
-            $types[] = new Type\NumberFilterType();
-            $types[] = new Type\NumberRangeFilterType();
-            $types[] = new Type\CheckboxFilterType();
-            $types[] = new Type\BooleanFilterType();
-            $types[] = new Type\ChoiceFilterType();
-            $types[] = new Type\EntityFilterType($app['doctrine']);
-            $types[] = new Type\DateFilterType();
-            $types[] = new Type\DateRangeFilterType();
-            $types[] = new Type\DateTimeFilterType();
-            $types[] = new Type\DateTimeRangeFilterType();
-            $types[] = new Type\CollectionAdapterFilterType();
-            $types[] = new Type\SharedableFilterType();
-            return $types;
-        }));
+        $app['form.types'] = $app->share(
+            $app->extend('form.types', function ($types) use ($app) {
+                $types[] = new Type\TextFilterType();
+                $types[] = new Type\NumberFilterType();
+                $types[] = new Type\NumberRangeFilterType();
+                $types[] = new Type\CheckboxFilterType();
+                $types[] = new Type\BooleanFilterType();
+                $types[] = new Type\ChoiceFilterType();
+                $types[] = new Type\DateFilterType();
+                $types[] = new Type\DateRangeFilterType();
+                $types[] = new Type\DateTimeFilterType();
+                $types[] = new Type\DateTimeRangeFilterType();
+                $types[] = new Type\CollectionAdapterFilterType();
+                $types[] = new Type\SharedableFilterType();
+
+                if (isset($app['doctrine'])) {
+                    $types[] = new Type\EntityFilterType($app['doctrine']);
+                }
+
+                return $types;
+            })
+        );
 
         // Type extension
-        $app['form.type.extensions'] = $app->share($app->extend('form.type.extensions', function ($extensions) {
-            $extensions[] = new FilterTypeExtension();
-            return $extensions;
-        }));
+        $app['form.type.extensions'] = $app->share(
+            $app->extend('form.type.extensions', function ($extensions) {
+                $extensions[] = new FilterTypeExtension();
+                return $extensions;
+            })
+        );
 
         // Form data extraction
-        $app['lexik_form_filter.form_data_extractor'] = $app->share(function () use ($app) {
+        $app['lexik_form_filter.form_data_extractor'] = $app->share(function () {
             $extractor = new FormDataExtractor();
             $extractor->addMethod(new DefaultExtractionMethod());
             $extractor->addMethod(new TextExtractionMethod());
