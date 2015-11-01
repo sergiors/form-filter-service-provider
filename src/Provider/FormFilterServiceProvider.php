@@ -1,5 +1,5 @@
 <?php
-namespace Inbep\Silex\Provider;
+namespace Sergiors\Silex\Provider;
 
 use Silex\Application;
 use Silex\ServiceProviderInterface;
@@ -26,7 +26,9 @@ class FormFilterServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
         if (!isset($app['form.factory'])) {
-            throw new \LogicException('You must register the FormServiceProvider to use the FormFilterServiceProvider');
+            throw new \LogicException(
+                'You must register the FormServiceProvider to use the FormFilterServiceProvider.'
+            );
         }
 
         $app['lexik_form_filter.query_builder_updater'] = $app->share(
@@ -114,8 +116,18 @@ class FormFilterServiceProvider implements ServiceProviderInterface
     {
         $app['dispatcher']->addSubscriber($app['lexik_form_filter.get_filter.doctrine_orm']);
         $app['dispatcher']->addSubscriber($app['lexik_form_filter.get_filter.doctrine_dbal']);
-        $app['dispatcher']->addListener('lexik_filter.prepare', [$app['lexik_form_filter.filter_prepare'], 'onFilterBuilderPrepare']);
-        $app['dispatcher']->addListener('lexik_filter.apply_filters.orm', [$app['lexik_form_filter.apply_filter.doctrine_orm'], 'onApplyFilterCondition']);
-        $app['dispatcher']->addListener('lexik_filter.apply_filters.dbal', [$app['lexik_form_filter.apply_filter.doctrine_dbal'], 'onApplyFilterCondition']);
+
+        $app['dispatcher']->addListener('lexik_filter.prepare', [
+            $app['lexik_form_filter.filter_prepare'],
+            'onFilterBuilderPrepare'
+        ]);
+        $app['dispatcher']->addListener('lexik_filter.apply_filters.orm', [
+            $app['lexik_form_filter.apply_filter.doctrine_orm'],
+            'onApplyFilterCondition'
+        ]);
+        $app['dispatcher']->addListener('lexik_filter.apply_filters.dbal', [
+            $app['lexik_form_filter.apply_filter.doctrine_dbal'],
+            'onApplyFilterCondition'
+        ]);
     }
 }
