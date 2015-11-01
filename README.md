@@ -1,16 +1,16 @@
-Form Filter for Silex
----------------------
+Form Filter Service Provider
+----------------------------
 
 To see the complete documentation, check out [lexik/LexikFormFilterBundle](https://github.com/lexik/LexikFormFilterBundle)
 
 Install
 -------
 ```bash
-composer require inbep/form-filter-service-provider
+composer require sergiors/form-filter-service-provider "dev-master"
 ```
 
 ```php
-use Inbep\Silex\Provider\FormFilterServiceProvider;
+use Sergiors\Silex\Provider\FormFilterServiceProvider;
 
 $app->register(new FormFilterServiceProvider());
 
