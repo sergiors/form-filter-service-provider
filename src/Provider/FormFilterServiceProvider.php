@@ -1,4 +1,5 @@
 <?php
+
 namespace Sergiors\Silex\Provider;
 
 use Silex\Application;
@@ -73,6 +74,7 @@ class FormFilterServiceProvider implements ServiceProviderInterface
         $app['form.type.extensions'] = $app->share(
             $app->extend('form.type.extensions', function ($extensions) {
                 $extensions[] = new FilterTypeExtension();
+
                 return $extensions;
             })
         );
@@ -83,6 +85,7 @@ class FormFilterServiceProvider implements ServiceProviderInterface
             $extractor->addMethod(new DefaultExtractionMethod());
             $extractor->addMethod(new TextExtractionMethod());
             $extractor->addMethod(new ValueKeysExtractionMethod());
+
             return $extractor;
         });
 
@@ -119,15 +122,15 @@ class FormFilterServiceProvider implements ServiceProviderInterface
 
         $app['dispatcher']->addListener('lexik_filter.prepare', [
             $app['lexik_form_filter.filter_prepare'],
-            'onFilterBuilderPrepare'
+            'onFilterBuilderPrepare',
         ]);
         $app['dispatcher']->addListener('lexik_filter.apply_filters.orm', [
             $app['lexik_form_filter.apply_filter.doctrine_orm'],
-            'onApplyFilterCondition'
+            'onApplyFilterCondition',
         ]);
         $app['dispatcher']->addListener('lexik_filter.apply_filters.dbal', [
             $app['lexik_form_filter.apply_filter.doctrine_dbal'],
-            'onApplyFilterCondition'
+            'onApplyFilterCondition',
         ]);
     }
 }

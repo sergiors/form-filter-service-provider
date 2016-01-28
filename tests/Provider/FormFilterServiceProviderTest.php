@@ -1,10 +1,12 @@
 <?php
-namespace Sergiors\Silex\Provider;
+
+namespace Sergiors\Silex\Tests\Provider;
 
 use Silex\Application;
 use Silex\WebTestCase;
 use Silex\Provider\FormServiceProvider;
 use Lexik\Bundle\FormFilterBundle\Filter\FilterBuilderUpdater;
+use Sergiors\Silex\Provider\FormFilterServiceProvider;
 
 class FormFilterServiceProviderTest extends WebTestCase
 {
