@@ -2,8 +2,10 @@
 
 namespace Sergiors\Silex\Provider;
 
+use Pimple\Container;
+use Pimple\ServiceProviderInterface;
 use Silex\Application;
-use Silex\ServiceProviderInterface;
+use Silex\Api\BootableProviderInterface;
 use Lexik\Bundle\FormFilterBundle\Filter\FilterBuilderUpdater;
 use Lexik\Bundle\FormFilterBundle\Filter\Form\Type;
 use Lexik\Bundle\FormFilterBundle\Filter\Form\FilterTypeExtension;
@@ -19,12 +21,12 @@ use Lexik\Bundle\FormFilterBundle\Event\Subscriber\DoctrineDBALSubscriber;
 /**
  * @author Sérgio Rafael Siqueira <sergio@inbep.com.br>
  */
-class FormFilterServiceProvider implements ServiceProviderInterface
+class FormFilterServiceProvider implements ServiceProviderInterface, BootableProviderInterface
 {
     /**
-     * @param Application $app
+     * @param Container $app
      */
-    public function register(Application $app)
+    public function register(Container $app)
     {
         if (!isset($app['form.factory'])) {
             throw new \LogicException(
@@ -32,84 +34,80 @@ class FormFilterServiceProvider implements ServiceProviderInterface
             );
         }
 
-        $app['lexik_form_filter.query_builder_updater'] = $app->share(
-            function (Application $app) {
-                return new FilterBuilderUpdater(
-                    $app['lexik_form_filter.form_data_extractor'],
-                    $app['dispatcher']
-                );
-            }
-        );
+        $app['lexik_form_filter.query_builder_updater'] = function () use ($app) {
+            return new FilterBuilderUpdater(
+                $app['lexik_form_filter.form_data_extractor'],
+                $app['dispatcher']
+            );
+        };
 
         // Alias
-        $app['form_filter'] = $app->share(function (Application $app) {
+        $app['form_filter'] = function () use ($app) {
             return $app['lexik_form_filter.query_builder_updater'];
-        });
+        };
 
         // Filter Types
-        $app['form.types'] = $app->share(
-            $app->extend('form.types', function ($types) use ($app) {
-                $types[] = new Type\TextFilterType();
-                $types[] = new Type\NumberFilterType();
-                $types[] = new Type\NumberRangeFilterType();
-                $types[] = new Type\CheckboxFilterType();
-                $types[] = new Type\BooleanFilterType();
-                $types[] = new Type\ChoiceFilterType();
-                $types[] = new Type\DateFilterType();
-                $types[] = new Type\DateRangeFilterType();
-                $types[] = new Type\DateTimeFilterType();
-                $types[] = new Type\DateTimeRangeFilterType();
-                $types[] = new Type\CollectionAdapterFilterType();
-                $types[] = new Type\SharedableFilterType();
+        $app['form.types'] = $app->extend('form.types', function ($types) use ($app) {
+            $types = array_merge($types, [
+                new Type\TextFilterType(),
+                new Type\NumberFilterType(),
+                new Type\NumberRangeFilterType(),
+                new Type\CheckboxFilterType(),
+                new Type\BooleanFilterType(),
+                new Type\ChoiceFilterType(),
+                new Type\DateFilterType(),
+                new Type\DateRangeFilterType(),
+                new Type\DateTimeFilterType(),
+                new Type\DateTimeRangeFilterType(),
+                new Type\CollectionAdapterFilterType(),
+                new Type\SharedableFilterType()
+            ]);
 
-                if (isset($app['doctrine'])) {
-                    $types[] = new Type\EntityFilterType($app['doctrine']);
-                }
+            if (isset($app['doctrine'])) {
+                $types[] = new Type\EntityFilterType($app['doctrine']);
+            }
 
-                return $types;
-            })
-        );
+            return $types;
+        });
 
         // Type extension
-        $app['form.type.extensions'] = $app->share(
-            $app->extend('form.type.extensions', function ($extensions) {
-                $extensions[] = new FilterTypeExtension();
+        $app['form.type.extensions'] = $app->extend('form.type.extensions', function ($extensions) {
+            $extensions[] = new FilterTypeExtension();
 
-                return $extensions;
-            })
-        );
+            return $extensions;
+        });
 
         // Form data extraction
-        $app['lexik_form_filter.form_data_extractor'] = $app->share(function () {
+        $app['lexik_form_filter.form_data_extractor'] = function () {
             $extractor = new FormDataExtractor();
             $extractor->addMethod(new DefaultExtractionMethod());
             $extractor->addMethod(new TextExtractionMethod());
             $extractor->addMethod(new ValueKeysExtractionMethod());
 
             return $extractor;
-        });
+        };
 
-        $app['lexik_form_filter.filter_prepare'] = $app->share(function () {
+        $app['lexik_form_filter.filter_prepare'] = function () {
             return new PrepareListener();
-        });
+        };
 
         // Subscriber to get filter condition
-        $app['lexik_form_filter.get_filter.doctrine_orm'] = $app->share(function () {
+        $app['lexik_form_filter.get_filter.doctrine_orm'] = function () {
             return new DoctrineORMSubscriber();
-        });
+        };
 
-        $app['lexik_form_filter.get_filter.doctrine_dbal'] = $app->share(function () {
+        $app['lexik_form_filter.get_filter.doctrine_dbal'] = function () {
             return new DoctrineDBALSubscriber();
-        });
+        };
 
         // Listener to apply filter conditions
-        $app['lexik_form_filter.apply_filter.doctrine_orm'] = $app->share(function () {
+        $app['lexik_form_filter.apply_filter.doctrine_orm'] = function () {
             return new DoctrineApplyFilterListener(null);
-        });
+        };
 
-        $app['lexik_form_filter.apply_filter.doctrine_dbal'] = $app->share(function () {
+        $app['lexik_form_filter.apply_filter.doctrine_dbal'] = function () {
             return new DoctrineApplyFilterListener(null);
-        });
+        };
     }
 
     /**
